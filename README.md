@@ -8,7 +8,11 @@ Open the repository in a Codespace and use its terminal. Docker must be availabl
 
 ### First-time setup
 
-If the `superkart-backend` and `superkart-frontend` containers already exist (as they do in this Codespace), do not run the creation commands below; use **Check, stop, and restart** instead.
+Docker applies network and host mappings when a container is created. If the `superkart-backend` and `superkart-frontend` containers already exist (as they do in this Codespace), simply starting them again will not apply these settings. Remove the existing containers first, then run the commands below to recreate both:
+
+```bash
+docker rm -f superkart-frontend superkart-backend
+```
 
 From the repository root, build the images and create a Docker network:
 
@@ -31,11 +35,12 @@ docker run -d \
 docker run -d \
   --name superkart-frontend \
   --network superkart-network \
+  --add-host backend:host-gateway \
   -p 8501:8501 \
   superkart-frontend
 ```
 
-The network alias `backend` is required: it lets the frontend reach the API at `http://backend:7860`.
+The frontend calls the API at `http://backend:7860`. The `--add-host backend:host-gateway` option maps that hostname to the Docker host gateway from inside the frontend container. This is needed in Codespaces environments where direct container-to-container connections time out. Keep the backend's `-p 7860:7860` mapping so the host gateway can forward the request to the API.
 
 ### Open the apps
 
@@ -106,6 +111,7 @@ docker run -d \
 docker run -d \
   --name superkart-frontend \
   --network superkart-network \
+  --add-host backend:host-gateway \
   -p 8501:8501 \
   superkart-frontend
 ```
@@ -126,4 +132,4 @@ curl http://localhost:7860/
 
 ## Run locally without Docker
 
-The frontend is configured to call the backend by its Docker network hostname (`backend`). Run both apps with Docker as described above to ensure they can communicate.
+The frontend is configured to call the backend at `http://backend:7860`. Use the host-gateway mapping shown above in Codespaces so requests can reach the published backend port.
